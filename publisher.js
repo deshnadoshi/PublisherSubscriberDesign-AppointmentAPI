@@ -7,7 +7,7 @@ class Publisher {
     }
 
     subscribe(subscriber) {
-        this.#subscribers.push(subscriber);
+        this.#subscribers.add(subscriber);
     }
 
     unsubscribe(subscriber) {
@@ -15,8 +15,9 @@ class Publisher {
     }
 
     publish(cancellationInfo) {
-        storeCancellationDB(cancellationInfo); 
         this.#subscribers.forEach(subscriber => subscriber.notifyCancellation(cancellationInfo));
     }
 
 }
+
+module.exports = Publisher;

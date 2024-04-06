@@ -6,27 +6,20 @@ const { time } = require('console');
 const crypto = require('crypto');
 const querystring = require('querystring');
 const { start } = require('repl');
+const Publisher = require('./publisher.js'); 
+const TerminalBonder = require('./terminalBonder.js'); 
 
 // Set-up the connection to the MySQL Database. 
-const poolAppt = mysql.createPool({
+const pool = mysql.createPool({
     host: 'localhost',
     user: 'root',
     password: 'root',
-    database: 'appointments',
+    database: 'swe2024assignments',
     waitForConnections: true,
     connectionLimit: 20,
     queueLimit: 0
 });
 
-const poolCancellations = mysql.createPool({
-    host: 'localhost',
-    user: 'root',
-    password: 'root',
-    database: 'cancellations',
-    waitForConnections: true,
-    connectionLimit: 20,
-    queueLimit: 0
-});
   
 // Process the GET requests for all the required functionality. 
 const process = async (req, res) => {
@@ -58,7 +51,7 @@ const process = async (req, res) => {
             let bookedDates = [];
             try {
                 const dtstart = 'dtstart';
-                const connection = await poolAppt.getConnection();
+                const connection = await pool.getConnection();
                 const [rows] = await connection.execute(`SELECT \`${dtstart}\` FROM \`appointments\``);
                 connection.release();
         
@@ -105,7 +98,7 @@ const process = async (req, res) => {
                 result = true; 
                 confirmationCode = generateConfirmationCode(); 
                 try {
-                    const connection = await poolAppt.getConnection();
+                    const connection = await pool.getConnection();
 
                     const query = `
                       INSERT INTO appointments (attendee, dtstart, dtstamp, method, stat, uid)
@@ -192,7 +185,7 @@ const process = async (req, res) => {
             let bookedDates = [];
             try {
                 const dtstart = 'dtstart';
-                const connection = await poolAppt.getConnection();
+                const connection = await pool.getConnection();
                 const [rows] = await connection.execute(`SELECT \`${dtstart}\` FROM \`appointments\``);
                 connection.release();
         
@@ -255,7 +248,7 @@ const process = async (req, res) => {
 
             try {
 
-                const connection = await poolAppt.getConnection();
+                const connection = await pool.getConnection();
                 const [foundUID] = await connection.execute('SELECT `uid` FROM `appointments` WHERE `uid` = ?', [uid]);
                 const [foundAppointment] = await connection.execute('SELECT * FROM `appointments` WHERE `uid` = ?', [uid]);
 
@@ -309,12 +302,23 @@ const process = async (req, res) => {
 
             try {
 
-                const connectionAppt = await poolAppt.getConnection();
+                const connectionAppt = await pool.getConnection();
                 const [foundUID] = await connectionAppt.execute('SELECT `uid` FROM `appointments` WHERE `uid` = ?', [uid]);
                 connectionAppt.release();
                 if (foundUID.length > 0){
                     await connectionAppt.execute('UPDATE `appointments` SET `stat` = ?, `dtstart` = NULL WHERE `uid` = ?', ['CANCELED', uid]);
                     result = true; 
+
+                    let cancellationPublisher = new Publisher(); 
+
+                    let doctorTerminalBonder = new TerminalBonder(); 
+                    let secretaryTerminalBonder = new TerminalBonder(); 
+            
+                    cancellationPublisher.subscribe(doctorTerminalBonder); 
+                    cancellationPublisher.subscribe(secretaryTerminalBonder); 
+            
+                    cancellationPublisher.publish({ uid }); 
+            
                 }
                    
             } catch (error) {
@@ -322,17 +326,6 @@ const process = async (req, res) => {
                 console.error('Error fetching column values:', error);
                 throw error;
             }
-            
-            let cancellationPublisher = new Publisher(); 
-
-            let doctorTerminalBonder = new TerminalBonder(); 
-            let secretaryTerminalBonder = new TerminalBonder(); 
-    
-            cancellationPublisher.subscribe(doctorTerminalBonder); 
-            cancellationPublisher.subscribe(secretaryTerminalBonder); 
-    
-            cancellationPublisher.publish({ uid }); 
-    
 
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ success: result, message: result ? 'Appointment cancelled successfully' : 'Appointment does not exist' }));
@@ -492,4 +485,4 @@ function generateConfirmationCode() {
     return code;
 }
 
-module.exports = {server, poolAppt, poolCancellations}; 
+module.exports = {server, pool}; 

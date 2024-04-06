@@ -8,8 +8,8 @@ class Bonder {
     bind (source, cancel){
         const myPub = this.#nextPublisher;
 
-        source.subscribe(function(uid){
-            myPub.publish(cancel(uid)); 
+        source.subscribe(function(cancellationInfo){
+            myPub.publish(cancel(cancellationInfo)); 
         }); 
 
         return myPub; 
