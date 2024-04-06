@@ -1,0 +1,14 @@
+{
+  "name": "software-engineering-assignment-7",
+  "version": "1.0.0",
+  "description": "Software Engineering Assignment 7, due 4/6/2024",
+  "main": "pubsubscheduler.js",
+  "scripts": {
+    "test": "jasmine"
+  },
+  "author": "Deshna Doshi",
+  "license": "ISC",
+  "devDependencies": {
+    "jasmine": "^5.1.0"
+  }
+}
