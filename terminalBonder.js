@@ -13,58 +13,64 @@ const pool = mysql.createPool({
 
 class TerminalBonder {
     #cancellationSuccess = false;
-    #countDoctor = 0; 
-    #countSec = 0; 
+    #processedCancellations = new Set(); // Keep track of processed cancellations
+    static instance;
 
-
-    get value(){
-        return this.#cancellationSuccess; 
+    constructor() {
+        if (TerminalBonder.instance) {
+            return TerminalBonder.instance;
+        }
+        TerminalBonder.instance = this;
     }
 
-    bind(source){
-        let self = this; 
+    get value() {
+        return this.#cancellationSuccess;
+    }
 
-        source.subscribe(function(cancellationInfo){
-            self.#cancellationSuccess = cancel(cancellationInfo); 
-            console.log("The appointment was cancelled"); 
-        }); 
+    bind(source) {
+        let self = this;
 
-        return source; 
+        source.subscribe(function (cancellationInfo) {
+            // self.#cancellationSuccess = cancel(cancellationInfo);
+            console.log("The appointment was cancelled");
+        });
+
+        return source;
     }
 
     async notifyCancellation(cancellationInfo) {
-        const { uid, recipient } = cancellationInfo; 
-
+        const { uid, recipient } = cancellationInfo;
 
         try {
+            if (!this.#processedCancellations.has(uid)) {
+                const connectionCancellations = await pool.getConnection();
+                const dtstamp = new Date();
+                const message = "Cancellation from patient.";
 
-            const connectionCancellations = await pool.getConnection();
-            const dtstamp = new Date(); 
-            const message = "Cancellation from patient.";
+                if (recipient === 'doctor') {
+                    console.log('Cancellation notification sent to Doctor from Patient UID', uid);
+                } else if (recipient === 'secretary') {
+                    console.log('Cancellation notification sent to Secretary from Patient UID', uid);
+                }
 
-            if (recipient === 'doctor' && this.#countDoctor == 0) {
-                this.#countDoctor += 1; 
-                console.log('Cancellation notification sent to Doctor from Patient UID', uid);
-            } else if (recipient === 'secretary' && this.#countSec == 0) {
-                this.#countSec += 1; 
-                console.log('Cancellation notification sent to Secretary from Patient UID', uid);
+                await connectionCancellations.execute('INSERT INTO `cancellations` (`uid`, `dtstamp`, `message`) VALUES (?, ?, ?)', [uid, dtstamp, message]);
+                connectionCancellations.release();
+
+                this.#processedCancellations.add(uid);
             }
 
-            await connectionCancellations.execute('INSERT INTO `cancellations` (`uid`, `dtstamp`, `message`) VALUES (?, ?, ?)', [uid, dtstamp, message]);
-            connectionCancellations.release();
-
-            return true; 
+            return true;
         } catch (error) {
-
-            if (error.code === 'ER_DUP_ENTRY'){
-                // Handle duplicate entry error
+            if (error.code === 'ER_DUP_ENTRY') {
             } else {
                 console.error('Error processing cancellation:', error);
-                return false; 
+                return false;
             }
         }
     }
 }
+
+
 
 async function cancel(cancellationInfo) {
     const { uid } = cancellationInfo;

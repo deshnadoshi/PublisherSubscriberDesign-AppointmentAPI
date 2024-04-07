@@ -314,12 +314,12 @@ const process = async (req, res) => {
                     let doctorTerminalBonder = new TerminalBonder(); 
                     let secretaryTerminalBonder = new TerminalBonder(); 
             
-                    cancellationPublisher.subscribe(doctorTerminalBonder); 
-                    cancellationPublisher.subscribe(secretaryTerminalBonder); 
-            
+                    cancellationPublisher.subscribe(doctorTerminalBonder, 'doctor'); 
+                    cancellationPublisher.subscribe(secretaryTerminalBonder, 'secretary'); 
+
                     cancellationPublisher.publish({ uid, recipient: 'doctor' }); 
                     cancellationPublisher.publish({ uid, recipient: 'secretary' }); 
-
+        
             
                 }
                    
