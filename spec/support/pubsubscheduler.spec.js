@@ -1,6 +1,9 @@
 const supertest = require('supertest');
 const http = require('http');
 const { server } = require('../../pubsubscheduler'); 
+const Publisher = require('../../publisher.js');
+const TerminalBonder = require('../../terminalBonder.js');
+
 
 const app = supertest(server);
 
@@ -73,7 +76,7 @@ describe('Appointment API', () => {
     // Test Case 5: A valid cancellation request should be accepted.  
     it ('should return success message for a valid cancellation request', async () => {
         const invalidRequest = {
-            uid : "8645e2c5"
+            uid : "P7qR2y"
         };
 
         const response = await app
@@ -261,8 +264,52 @@ describe('Appointment API', () => {
         expect(response.body.success).toBe(false);
         expect(response.body.message).toContain('One or more entries in your request is a duplicate or invalid/incorrectly formatted. Please try again.');
     });
-
-
-
     
+});
+
+describe('TerminalBonder', () => {
+    let terminalBonder;
+
+    beforeEach(() => {
+        terminalBonder = new TerminalBonder();
+        spyOn(console, 'log');
+
+    });
+
+    it('should notify cancellation successfully', async() => {
+        const cancellationInfo = {
+            uid: 'A3xZ9k',
+            recipient: 'doctor'
+        };
+
+
+        await terminalBonder.notifyCancellation(cancellationInfo);
+
+        expect(console.log).toHaveBeenCalledWith('Cancellation notification sent to Doctor from Patient UID', 'A3xZ9k');
+    });
+});
+
+describe('Publisher', () => {
+    let publisher;
+
+    beforeEach(() => {
+        publisher = new Publisher();
+    });
+
+    it('should subscribe and notify successfully', () => {
+        const subscriber = {
+            notifyCancellation: jasmine.createSpy('notifyCancellation')
+        };
+
+        publisher.subscribe(subscriber);
+
+        const cancellationInfo = {
+            uid: 'A3xZ9k',
+            recipient: 'doctor'
+        };
+
+        publisher.publish(cancellationInfo);
+
+        expect(subscriber.notifyCancellation).toHaveBeenCalledWith(cancellationInfo);
+    });
 });
