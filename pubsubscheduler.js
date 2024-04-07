@@ -317,7 +317,9 @@ const process = async (req, res) => {
                     cancellationPublisher.subscribe(doctorTerminalBonder); 
                     cancellationPublisher.subscribe(secretaryTerminalBonder); 
             
-                    cancellationPublisher.publish({ uid }); 
+                    cancellationPublisher.publish({ uid, recipient: 'doctor' }); 
+                    cancellationPublisher.publish({ uid, recipient: 'secretary' }); 
+
             
                 }
                    
