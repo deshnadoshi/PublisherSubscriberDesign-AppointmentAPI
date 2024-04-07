@@ -7,6 +7,7 @@ const TerminalBonder = require('../../terminalBonder.js');
 
 const app = supertest(server);
 
+// General Testing for API/Scheduling Platform
 describe('Appointment API', () => {
     // Test Case 1: A valid schedule request should be accepted.
     it ('should return success message for a valid schedule request', async () => {
@@ -267,6 +268,7 @@ describe('Appointment API', () => {
     
 });
 
+// Subscriber and Notification Testing
 describe('TerminalBonder', () => {
     let terminalBonder;
 
@@ -287,8 +289,21 @@ describe('TerminalBonder', () => {
 
         expect(console.log).toHaveBeenCalledWith('Cancellation notification sent to Doctor from Patient UID', 'A3xZ9k');
     });
+
+    it('should notify cancellation successfully to secretary', async() => {
+        const cancellationInfo = {
+            uid: 'B7yW2z',
+            recipient: 'secretary'
+        };
+
+        await terminalBonder.notifyCancellation(cancellationInfo);
+
+        expect(console.log).toHaveBeenCalledWith('Cancellation notification sent to Secretary from Patient UID', 'B7yW2z');
+    });
+
 });
 
+// Publisher Testing
 describe('Publisher', () => {
     let publisher;
 
@@ -312,4 +327,22 @@ describe('Publisher', () => {
 
         expect(subscriber.notifyCancellation).toHaveBeenCalledWith(cancellationInfo);
     });
+
+    it('should subscribe and notify successfully to secretary', () => {
+        const subscriber = {
+            notifyCancellation: jasmine.createSpy('notifyCancellation')
+        };
+
+        publisher.subscribe(subscriber);
+
+        const cancellationInfo = {
+            uid: 'B7yW2z',
+            recipient: 'secretary'
+        };
+
+        publisher.publish(cancellationInfo);
+
+        expect(subscriber.notifyCancellation).toHaveBeenCalledWith(cancellationInfo);
+    });
+
 });

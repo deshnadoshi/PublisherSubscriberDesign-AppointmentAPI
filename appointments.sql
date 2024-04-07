@@ -45,6 +45,8 @@ INSERT INTO `appointments` (`attendee`, `dtstart`, `dtstamp`, `method`, `stat`, 
 ('preloaded1@gmail.com', '2024-09-25', '2024-03-02 00:00:00', 'REQUEST', 'CONFIRMED', 'A3xZ9k'),
 ('preloaded2@yahoo.com', '2024-07-16', '2024-03-02 00:00:00', 'REQUEST', 'TENTATIVE', 'P7qR2y');
 
+INSERT INTO `appointments` (`attendee`, `dtstart`, `dtstamp`, `method`, `stat`, `uid`) VALUES ('preloaded4@gmail.com', '2025-07-09', '2024-04-07 13:37:57', 'REQUEST', 'CONFIMED', 'B7yW2z');
+
 --
 -- Indexes for dumped tables
 --
